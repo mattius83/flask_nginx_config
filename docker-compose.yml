@@ -8,6 +8,7 @@ services:
       volumes:
           - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
           - ./front_end/dist:/usr/share/nginx/html
+          - ./front_end/assets:/usr/share/nginx/assets
       depends_on:
           - flask-app
 
