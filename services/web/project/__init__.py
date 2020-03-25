@@ -4,7 +4,7 @@ import urllib.request
 from werkzeug.utils import secure_filename
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf'])
-UPLOAD_FOLDER='/usr/src/app/uploaded_files'
+UPLOAD_FOLDER='/usr/local/uploaded_files'
 
 
 def allowed_file(filename):
@@ -27,6 +27,14 @@ def application_health():
 @application.route("/upload", methods=["POST"])
 def upload_file():
     if request.method == 'POST':
+
+        title = request.form.get('title', None)
+        year = str(request.form.get('year', None))
+        category = request.form.get('category', None)
+
+        if year is None or len(year) == 0 or category is None or len(category) == 0:
+            return jsonify(status="error", message="year and category must be provided in request")
+
         if 'file' not in request.files:
             return jsonify(status="error", message="file not provided in request")
 
@@ -36,7 +44,11 @@ def upload_file():
 
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
+            subdirectory = application.config['UPLOAD_FOLDER'] + "/" +  year + "/" + category + "/"
+            if not os.path.isdir(subdirectory):
+                mode = 0o755
+                os.makedirs(subdirectory, mode)
+            file.save(os.path.join(subdirectory, filename))
             return jsonify(status="ok", message="file uploaded successfully")
         if not file:
             return jsonify(status="error", message="file was empty")
