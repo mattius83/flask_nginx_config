@@ -4,7 +4,8 @@ import urllib.request
 from werkzeug.utils import secure_filename
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf'])
-UPLOAD_FOLDER='/usr/local/uploaded_files'
+# UPLOAD_FOLDER='/usr/local/uploaded_files'
+UPLOAD_FOLDER='/usr/local/household'
 
 
 def allowed_file(filename):
