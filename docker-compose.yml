@@ -13,6 +13,7 @@ services:
           - flask-app
 
   flask-app:
+      image: doc-mgt-flask
       build:
           context: ./services/web
           dockerfile: Dockerfile
