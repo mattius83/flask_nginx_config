@@ -1,17 +1,31 @@
 from flask import Flask, jsonify, request, render_template, current_app
 import os
+
 import urllib.request
 from werkzeug.utils import secure_filename
+from rq import Queue
+from rq.job import Job
+from worker.worker import conn
+
+
+
+
+# Application level configuration
 
 ALLOWED_EXTENSIONS = set(['txt', 'pdf'])
 # UPLOAD_FOLDER='/usr/local/uploaded_files'
 UPLOAD_FOLDER='/usr/local/household'
 
+application = Flask(__name__, static_url_path='')
+application.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+q = Queue(connection=conn)
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
-application = Flask(__name__, static_url_path='')
-application.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+
 
 @application.route("/")
 def home_page():
@@ -24,6 +38,13 @@ def home_page():
 @application.route("/health")
 def application_health():
     return jsonify(application="MJT Personal Document Management", online=True)
+
+@application.route("/test_add_queue")
+def test_add_queue():
+    job = q.enqueue_call('text_processor.perform_job', [3])
+    current_app.logger.error("Added a job to the queue")
+    return jsonify(status="Added a job to the queue")
+
 
 @application.route("/upload", methods=["POST"])
 def upload_file():
