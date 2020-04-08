@@ -41,9 +41,9 @@ def application_health():
 
 @application.route("/test_add_queue")
 def test_add_queue():
-    job = q.enqueue_call('text_processor.perform_job', [3])
-    current_app.logger.error("Added a job to the queue")
-    return jsonify(status="Added a job to the queue")
+    job = q.enqueue_call('text_processor.perform_job', [30], description="delay by 30 seconds", meta={'path':'/blah/blah/blah'})
+    current_app.logger.error("Added a job to the queue: " + str(job))
+    return jsonify(status="Added a job to the queue to sleep for 30 seconds: " + str(job.id))
 
 
 @application.route("/upload", methods=["POST"])
