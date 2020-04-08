@@ -22,6 +22,9 @@ services:
           - ./services/web/:/usr/src/app/
           - ./services/uploaded_files:/usr/local/uploaded_files
           - /Volumes/Documents/Household:/usr/local/household
+      environment:
+          - UPLOAD_FOLDER='/usr/local/household'
+          - WHOOSH_INDEX='/usr/local/whoosh/indexdir'
       ports:
           - 5000:5000
 
