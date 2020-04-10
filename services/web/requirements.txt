@@ -5,3 +5,4 @@ textract==1.6.3
 nltk==3.4.5
 redis==3.4.1
 rq==1.2.2
+whoosh==2.7.4
