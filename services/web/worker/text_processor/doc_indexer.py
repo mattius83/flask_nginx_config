@@ -1,35 +1,40 @@
 import os
 from text_processor.doc_processor import extract_text
 from text_processor.doc_processor import extract_keywords
-from whoosh.index import create_in
+from whoosh.index import create_in, open_dir
 from whoosh.fields import *
 
 
 def index_document(document_path, **kwargs):
-    index_directory = os.getenv('WHOOSH_INDEX')
-    print("The location of the Whoosh index is at: " + index_directory)
 
 
     # Step 1.  Extract the text of document located at document_path
-    doc_body = extract_text(document_path)
+    print("Extracting Text from " + document_path)
+    extracted_text = extract_text(document_path)
+    doc_body = extracted_text.casefold()
+
 
     # Step 2.  Extract the system keywords from the text
+    print("Extracting keywords from " + document_path)
     raw_system_tags = extract_keywords(doc_body)
     doc_system_tags = convert_tag_data(raw_system_tags)
 
     # Step 3.  Get the other meta-data
+    print("Getting Meta-data")
     doc_title = kwargs.get('title', '')
     doc_user_tags = convert_tag_data(kwargs.get('user_tags', ''))
 
     # Step 4.  Save the text file as document_path with .txt extension
+    print("Making Text File Copy of: " + document_path)
     write_document_text_with_meta_data(document_path, doc_body, title=doc_title, user_tags=doc_user_tags)
 
-
-    # Step x.  Index the document text
-    #           - text
-    #           - keywords
-    #           - path
-    #           - tags
+    # Step 5.  Index the document text using WHOOSH
+    print("Indexing " + document_path + " via Whoosh")
+    index_directory = os.getenv('WHOOSH_INDEX')
+    index_pointer = open_dir(index_directory)
+    writer = index_pointer.writer()
+    writer.add_document(title=doc_title, path=document_path, body=doc_body, system_tags=doc_system_tags, user_tags=doc_user_tags)
+    writer.commit()
 
 
 #  This function only needs to be called one time to initialize the Whoosh 'household' index
@@ -39,7 +44,7 @@ def initialize_household_index():
     if not os.path.exists(index_directory):
         print("Directory:  " + index_directory + "did not exist")
         schema = Schema(title=TEXT, path=ID(stored=True), body=TEXT, system_tags=KEYWORD, user_tags=KEYWORD)
-        ix = create_in(index_directory, schema, indexname="household")
+        ix = create_in(index_directory, schema)
 
 
 # convert tag data to a comma separated list
