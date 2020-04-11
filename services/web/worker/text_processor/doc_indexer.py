@@ -59,17 +59,6 @@ def convert_tag_data(tag_data):
     return doc_tags
 
 
-# process user tags from key word arguments
-def process_document_tags(**kwargs):
-    raw_user_tags = kwargs.get('user_tags', '')
-
-    if isinstance(raw_user_tags, list):
-        doc_user_tags = ",".join(raw_user_tags)
-    else:
-        doc_user_tags = raw_user_tags
-
-    return doc_user_tags
-
 # Read in optional key word arguments and write the text file with meta-data
 def write_document_text_with_meta_data(doc_path, doc_body, **kwargs):
 
