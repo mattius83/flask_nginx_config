@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 from rq import Queue
 from rq.job import Job
 from worker.worker import conn
+import project.searcher
 
 
 
@@ -44,6 +45,12 @@ def test_add_queue():
     job = q.enqueue_call('text_processor.perform_job', [30], description="delay by 30 seconds", meta={'path':'/blah/blah/blah'})
     current_app.logger.error("Added a job to the queue: " + str(job))
     return jsonify(status="Added a job to the queue to sleep for 30 seconds: " + str(job.id))
+
+@application.route("/search")
+def search_docs():
+    search_term = request.args.get('q')
+    results = searcher.search_documents_by_term(search_term)
+    return jsonify(data=results)
 
 
 @application.route("/upload", methods=["POST"])
