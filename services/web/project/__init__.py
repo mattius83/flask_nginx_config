@@ -62,6 +62,11 @@ def upload_file():
         title = request.form.get('title', None)
         year = str(request.form.get('year', None))
         category = request.form.get('category', None)
+        user_tags = request.form.get('tags', None)
+
+
+        current_app.logger.error("Here is the title: " + title)
+        current_app.logger.error("Here is the user_tags: " + user_tags)
 
         if year is None or len(year) == 0 or category is None or len(category) == 0:
             return jsonify(status="error", message="year and category must be provided in request")
@@ -79,9 +84,17 @@ def upload_file():
             if not os.path.isdir(subdirectory):
                 mode = 0o755
                 os.makedirs(subdirectory, mode)
-            file.save(os.path.join(subdirectory, filename))
+            document_path = os.path.join(subdirectory, filename)
+            file.save(document_path)
+
+            # place an job on the queue to index
+            kw = {"title": title, "user_tags": user_tags}
+            job = q.enqueue_call('text_processor.doc_indexer.index_document', document_path, kwargs=kw)
+            current_app.logger.error("Added a job to the queue: " + str(job))
             return jsonify(status="ok", message="file uploaded successfully")
+
         if not file:
             return jsonify(status="error", message="file was empty")
         if  not allowed_file(file.filename):
             return jsonify(status="error", message="file needs to be of type .txt or .pdf")
+
