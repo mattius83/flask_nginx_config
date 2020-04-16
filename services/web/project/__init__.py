@@ -42,9 +42,11 @@ def application_health():
 
 @application.route("/test_add_queue")
 def test_add_queue():
-    job = q.enqueue_call('text_processor.perform_job', [30], description="delay by 30 seconds", meta={'path':'/blah/blah/blah'})
+    #job = q.enqueue_call('text_processor.perform_job', [30], description="delay by 30 seconds", meta={'path':'/blah/blah/blah'})
+    kw = {"title": "Sample File", "user_tags": ["red", "green", "blue"]}
+    job = q.enqueue_call('text_processor.doc_indexer.index_document', ['/usr/local/household/sample.pdf'], kwargs=kw)
     current_app.logger.error("Added a job to the queue: " + str(job))
-    return jsonify(status="Added a job to the queue to sleep for 30 seconds: " + str(job.id))
+    return jsonify(status="Added a job to the queue to index a document: " + str(job.id))
 
 @application.route("/search")
 def search_docs():
