@@ -3,6 +3,26 @@ from text_processor.doc_processor import extract_text
 from text_processor.doc_processor import extract_keywords
 from whoosh.index import create_in, open_dir
 from whoosh.fields import *
+from whoosh import qparser
+
+
+
+def remove_document(index_dir, document_path):
+    writer = index_dir.writer()
+    writer.delete_by_term('path', document_path)
+    writer.commit()
+
+
+def has_document_been_indexed(index_dir, document_path):
+
+    with index_dir.searcher() as searcher:
+        parser = qparser.QueryParser("path", schema=index_dir.schema)
+        query = parser.parse(document_path)
+        results = searcher.search(query)
+        if len(results) > 0:
+            return True
+        else:
+            return False
 
 
 def index_document(document_path, **kwargs):
@@ -28,11 +48,13 @@ def index_document(document_path, **kwargs):
     print("Making Text File Copy of: " + document_path)
     write_document_text_with_meta_data(document_path, doc_body, title=doc_title, user_tags=doc_user_tags)
 
-    # Step 5.  Index the document text using WHOOSH
+    # Step 5.  Index the document text using WHOOSH, if path already indexed, remove it and re-index
     print("Indexing " + document_path + " via Whoosh")
     index_directory = os.getenv('WHOOSH_INDEX')
     index_pointer = open_dir(index_directory)
     writer = index_pointer.writer()
+    if has_document_been_indexed(index_pointer,document_path ):
+        writer.delete_by_term('path', document_path)
     writer.add_document(title=doc_title, path=document_path, body=doc_body, system_tags=doc_system_tags, user_tags=doc_user_tags)
     writer.commit()
 
@@ -41,10 +63,8 @@ def index_document(document_path, **kwargs):
 def initialize_household_index():
     index_directory = os.getenv('WHOOSH_INDEX')
     print("Here is the location of the WHOOSH_INDEX:  " + index_directory)
-    if not os.path.exists(index_directory):
-        print("Directory:  " + index_directory + "did not exist")
-        schema = Schema(title=TEXT, path=ID(stored=True), body=TEXT, system_tags=KEYWORD, user_tags=KEYWORD)
-        ix = create_in(index_directory, schema)
+    schema = Schema(title=TEXT(stored=True), path=ID(stored=True), body=TEXT, system_tags=KEYWORD(lowercase=True, commas=True), user_tags=KEYWORD(lowercase=True, commas=True))
+    ix = create_in(index_directory, schema)
 
 
 # convert tag data to a comma separated list

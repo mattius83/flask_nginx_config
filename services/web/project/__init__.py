@@ -78,6 +78,11 @@ def upload_file():
         if file.filename =='':
             return jsonify(status="error", message="filename may not be blank")
 
+        if not file:
+            return jsonify(status="error", message="file was empty")
+        if  not allowed_file(file.filename):
+            return jsonify(status="error", message="file needs to be of type .txt or .pdf")
+
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             subdirectory = application.config['UPLOAD_FOLDER'] + "/" +  year + "/" + category + "/"
@@ -88,13 +93,10 @@ def upload_file():
             file.save(document_path)
 
             # place an job on the queue to index
+            positional_arg_list = [document_path]
+            max_timeout_in_minutes = 10
+            max_timeout_in_seconds = max_timeout_in_minutes * 60
             kw = {"title": title, "user_tags": user_tags}
-            job = q.enqueue_call('text_processor.doc_indexer.index_document', document_path, kwargs=kw)
+            job = q.enqueue_call('text_processor.doc_indexer.index_document', positional_arg_list, timeout=max_timeout_in_seconds, kwargs=kw)
             current_app.logger.error("Added a job to the queue: " + str(job))
             return jsonify(status="ok", message="file uploaded successfully")
-
-        if not file:
-            return jsonify(status="error", message="file was empty")
-        if  not allowed_file(file.filename):
-            return jsonify(status="error", message="file needs to be of type .txt or .pdf")
-

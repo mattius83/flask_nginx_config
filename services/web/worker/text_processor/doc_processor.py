@@ -20,11 +20,15 @@ def extract_text(doc_path):
     while count < num_pages:
         pageObj = pdfReader.getPage(count)
         count = count + 1
-        text = text + pageObj.extractText()
+        page_text = pageObj.extractText().strip()
+        text = text + page_text
 
     if len(text) == 0:
+        print("Could not capture any text from PDF text extraction, so using OCR via Python Textract")
         raw_text = textract.process(doc_path, method='tesseract', language='eng')
         text = raw_text.decode("utf-8")
+    else:
+        print("Text extracted from PDF meta-data: " + text[:240])
 
     return text
 
